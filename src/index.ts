@@ -1,12 +1,12 @@
-import express from 'express';
+import express from "express";
 
 const app = express();
 app.use(express.json());
 
 const PORT = 3000;
 
-app.get('/', (req, res) => {
-  res.send('Hello, this is the start of the Employee Scheduler!');
+app.get("/", (req, res) => {
+  res.send("Hello, this is the start of the Employee Scheduler!");
 });
 
 app.listen(PORT, () => {
