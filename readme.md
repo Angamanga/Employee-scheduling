@@ -21,3 +21,9 @@ npm install @prisma/client@7.10.0 @prisma/adapter-pg pg
 
 npx prisma init --output ../generated/prisma
 
+Notes from schema and migration for prisma
+- Created schemas according to this diagram:
+![Schema diagram](./diagram.png)
+
+- Created migrations through running this command:
+npx prisma migrate dev --name creating-tables
