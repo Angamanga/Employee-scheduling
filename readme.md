@@ -27,3 +27,9 @@ Notes from schema and migration for prisma
 
 - Created migrations through running this command:
 npx prisma migrate dev --name creating-tables
+
+- Changed my mind and made roles an enum instead ... new migration through this command:
+
+npx prisma migrate dev --name use-enum-for-role
+
+Also changed name on the id-columns
