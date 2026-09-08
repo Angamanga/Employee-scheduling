@@ -12,8 +12,13 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
 model Employee {
-  UniqueID   Int      @id @default(autoincrement())
+  id   Int      @id @default(autoincrement())
   Firstname  String
   Lastname   String
   Email      String   @unique
@@ -24,22 +29,15 @@ model Employee {
   ScheduleAssignment ScheduleAssignment[]
 }
 
-model Roles {
-  UniqueID Int    @id @default(autoincrement())
-  RoleName String @unique
-  User     User[]
-}
-
 model User {
-  UniqueID   Int     @id @default(autoincrement())
-  RoleID     Int
-  Role       Roles   @relation(fields: [RoleID], references: [UniqueID])
+  id         Int     @id @default(autoincrement())
+  Role       Role    @default(EMPLOYEE)
   EmployeeID Int     @unique
-  Employee   Employee @relation(fields: [EmployeeID], references: [UniqueID])
+  Employee   Employee @relation(fields: [EmployeeID], references: [id])
 }
 
 model Shifts {
-  UniqueID   Int      @id @default(autoincrement())
+  id   Int      @id @default(autoincrement())
   ShiftName  String
   StartTime  DateTime
   EndTime    DateTime
@@ -48,34 +46,34 @@ model Shifts {
 }
 
 model Availability {
-  UniqueID   Int      @id @default(autoincrement())
+  id   Int      @id @default(autoincrement())
   Day        DateTime
   ShiftID    Int
-  Shift      Shifts   @relation(fields: [ShiftID], references: [UniqueID])
+  Shift      Shifts   @relation(fields: [ShiftID], references: [id])
   Available  Boolean
   EmployeeID Int
-  Employee   Employee @relation(fields: [EmployeeID], references: [UniqueID])
+  Employee   Employee @relation(fields: [EmployeeID], references: [id])
 
 
   @@unique([EmployeeID, ShiftID, Day]) //This avoids creating more conflicting availability per day/shift/employee
 }
 
 model ScheduleEntry {
-  UniqueID   Int      @id @default(autoincrement())
+  id   Int      @id @default(autoincrement())
   Day        DateTime
   ShiftID    Int
-  Shift      Shifts   @relation(fields: [ShiftID], references: [UniqueID])
+  Shift      Shifts   @relation(fields: [ShiftID], references: [id])
   ScheduleAssignment ScheduleAssignment[]
 
   @@unique([ShiftID, Day])// This avoids creating more than one of the three shifts per day
 }
 
 model ScheduleAssignment {
-  UniqueID        Int      @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   ScheduleEntryID Int
-  ScheduleEntry   ScheduleEntry @relation(fields: [ScheduleEntryID], references: [UniqueID])
+  ScheduleEntry   ScheduleEntry @relation(fields: [ScheduleEntryID], references: [id])
   EmployeeID      Int
-  Employee        Employee @relation(fields: [EmployeeID], references: [UniqueID])
+  Employee        Employee @relation(fields: [EmployeeID], references: [id])
 
   @@unique([ScheduleEntryID, EmployeeID]) // This avoids double-scheduling an employee twice on the same shift.
 }
