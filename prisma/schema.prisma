@@ -21,8 +21,6 @@ model Employee {
   id   Int      @id @default(autoincrement())
   Firstname  String
   Lastname   String
-  Email      String   @unique
-  LoginCode  String
   PhotoURL   String?
   User       User?
   Availability Availability[]
@@ -34,6 +32,9 @@ model User {
   Role       Role    @default(EMPLOYEE)
   EmployeeID Int     @unique
   Employee   Employee @relation(fields: [EmployeeID], references: [id])
+  LoginCode  String
+  Email      String   @unique
+
 }
 
 model Shifts {
