@@ -33,3 +33,11 @@ npx prisma migrate dev --name creating-tables
 npx prisma migrate dev --name use-enum-for-role
 
 Also changed name on the id-columns
+
+Notes from login-endpoint implementation
+Followed the instructions in https://www.freecodecamp.org/news/how-to-build-a-secure-authentication-system-with-jwt-and-refresh-tokens/
+
+Realised LoginCode should be in the usertable not the Employee-table, created a new migration via
+npx prisma migrate dev --name moving
+
+And also the email, created a new migration via:
