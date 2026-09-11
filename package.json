@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon --exec tsx src/index.ts",
     "lint": "eslint",
     "lint:fix": "eslint --fix"
-   },
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Angamanga/Employee-scheduling.git"
