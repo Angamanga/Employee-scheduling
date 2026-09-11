@@ -5,6 +5,9 @@ import { defineConfig } from "eslint/config";
 import eslintPluginPrettier from "eslint-plugin-prettier/recommended";
 export default defineConfig([
   {
+    ignores: ["generated/**"],
+  },
+  {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
     plugins: { js },
     extends: ["js/recommended"],
@@ -16,7 +19,6 @@ export default defineConfig([
     rules: {
       "no-unused-vars": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
-      "arrow-body-style": ["warn", "always"],
       "prefer-template": "warn",
       "no-unneeded-ternary": "warn",
       "capitalized-comments": "warn",
