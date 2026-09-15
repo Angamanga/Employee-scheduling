@@ -18,13 +18,19 @@ authRouter.post(
   async (req: Request, res: Response) => {
     try {
       // TODO: Add zod-validation
-      const { firstname, lastname, email, password } = req.body;
+      const { firstname, lastname, email, password, role } = req.body;
       const existingUser: User | null = await prisma.user.findUnique({
         where: { Email: email.toLowerCase() },
       });
 
       if (existingUser)
         return res.status(400).json({ message: "User already exists" });
+
+      if (role !== Role.ADMIN && role !== Role.EMPLOYEE) {
+        return res
+          .status(400)
+          .json({ message: "Please check the role and try again" });
+      }
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -43,7 +49,7 @@ authRouter.post(
 
       const newUser: User = await prisma.user.create({
         data: {
-          Role: Role.EMPLOYEE,
+          Role: role === Role.ADMIN || Role.EMPLOYEE ? role : Role.EMPLOYEE,
           LoginCode: hashedPassword,
           Email: email.toLowerCase(),
           EmployeeID: employee.id,
