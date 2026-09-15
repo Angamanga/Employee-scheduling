@@ -51,7 +51,7 @@ export const requireAdmin = (
   next: NextFunction,
 ) => {
   requireAuth(req, res, () => {
-    if (req.user.role !== Role.ADMIN) {
+    if (!req.user || req.user.role !== Role.ADMIN) {
       return res.status(403).json({ message: "Admin access required" });
     }
     next();

@@ -13,7 +13,10 @@ export const employeeRouter = Router();
 
 employeeRouter.get("/", requireAdmin, async (req: Request, res: Response) => {
   try {
-    const users: User[] = await prisma.user.findMany();
+const users: Pick<User, "id" | "Role" | "EmployeeID" | "Email">[] =
+      await prisma.user.findMany({
+        select: { id: true, Role: true, EmployeeID: true, Email: true },
+      });
     if (!users) {
       return res.status(404).json({ message: "No users found" });
     }
