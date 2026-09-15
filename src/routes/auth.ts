@@ -12,48 +12,51 @@ const prisma = new PrismaClient({ adapter });
 
 export const authRouter = Router();
 // Endpoint to register new employee (not ADMIN)
-authRouter.post("/register", requireAdmin, async (req: Request, res: Response) => {
-  try {
-    // TODO: Add zod-validation
-    const { firstname, lastname, email, password } = req.body;
-    const existingUser: User | null = await prisma.user.findUnique({
-      where: { Email: email.toLowerCase() },
-    });
+authRouter.post(
+  "/register",
+  requireAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      // TODO: Add zod-validation
+      const { firstname, lastname, email, password } = req.body;
+      const existingUser: User | null = await prisma.user.findUnique({
+        where: { Email: email.toLowerCase() },
+      });
 
-    if (existingUser)
-      return res.status(400).json({ message: "User already exists" });
+      if (existingUser)
+        return res.status(400).json({ message: "User already exists" });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-    const employee: Employee = await prisma.employee.create({
-      data: {
-        Firstname: firstname,
-        Lastname: lastname,
-      },
-    });
+      const employee: Employee = await prisma.employee.create({
+        data: {
+          Firstname: firstname,
+          Lastname: lastname,
+        },
+      });
 
-    if (!employee.id) {
-      res.status(500).json({ message: "Could not create user" });
-      return;
+      if (!employee.id) {
+        res.status(500).json({ message: "Could not create user" });
+        return;
+      }
+      console.log(`New employee created: ${employee.id}`);
+
+      const newUser: User = await prisma.user.create({
+        data: {
+          Role: Role.EMPLOYEE,
+          LoginCode: hashedPassword,
+          Email: email.toLowerCase(),
+          EmployeeID: employee.id,
+        },
+      });
+
+      console.log(`New user created: ${newUser.id}`);
+      res.status(201).json({ message: "User created successfully" });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Server error" });
     }
-    console.log(`New employee created: ${employee.id}`);
-
-    const newUser: User = await prisma.user.create({
-      data: {
-        Role: Role.EMPLOYEE,
-        LoginCode: hashedPassword,
-        Email: email.toLowerCase(),
-        EmployeeID: employee.id,
-      },
-    });
-
-    console.log(`New user created: ${newUser.id}`);
-    res.status(201).json({ message: "User created successfully" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Server error" });
-  }
-},
+  },
 );
 
 // Get current user
