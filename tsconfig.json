@@ -40,5 +40,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "include": ["src/types"] // Including custom types
+  "include": ["src"]
 }
