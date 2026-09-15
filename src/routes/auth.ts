@@ -62,6 +62,9 @@ authRouter.post(
 // Get current user
 authRouter.get("/me", requireAuth, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
     const user: User | null = await prisma.user.findUnique({
       where: { id: req.user.id },
     });
