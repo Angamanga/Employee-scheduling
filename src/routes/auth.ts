@@ -5,55 +5,85 @@ import type { Employee, User } from "../../generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 export const authRouter = Router();
+// Endpoint to register new employee (not ADMIN)
+authRouter.post(
+  "/register",
+  requireAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      // TODO: Add zod-validation
+      const { firstname, lastname, email, password, role } = req.body;
+      const existingUser: User | null = await prisma.user.findUnique({
+        where: { Email: email.toLowerCase() },
+      });
 
-authRouter.post("/register", async (req: Request, res: Response) => {
-  try {
-    // TODO: Add zod-validation
-    const { firstname, lastname, email, password } = req.body;
-    const existingUser: User | null = await prisma.user.findUnique({
-      where: { Email: email.toLowerCase() },
-    });
+      if (existingUser)
+        return res.status(400).json({ message: "User already exists" });
 
-    if (existingUser)
-      return res.status(400).json({ message: "User already exists" });
+      if (role !== Role.ADMIN && role !== Role.EMPLOYEE) {
+        return res
+          .status(400)
+          .json({ message: "Please check the role and try again" });
+      }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-    const employee: Employee = await prisma.employee.create({
-      data: {
-        Firstname: firstname,
-        Lastname: lastname,
-      },
-    });
+      const employee: Employee = await prisma.employee.create({
+        data: {
+          Firstname: firstname,
+          Lastname: lastname,
+        },
+      });
 
-    if (!employee.id) {
-      res.status(500).json({ message: "Could not create user" });
-      return;
+      if (!employee.id) {
+        res.status(500).json({ message: "Could not create user" });
+        return;
+      }
+      console.log(`New employee created: ${employee.id}`);
+
+      const newUser: User = await prisma.user.create({
+        data: {
+          Role: role === Role.ADMIN || Role.EMPLOYEE ? role : Role.EMPLOYEE,
+          LoginCode: hashedPassword,
+          Email: email.toLowerCase(),
+          EmployeeID: employee.id,
+        },
+      });
+
+      console.log(`New user created: ${newUser.id}`);
+      res.status(201).json({ message: "User created successfully" });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Server error" });
     }
-    console.log(`New employee created: ${employee.id}`);
+  },
+);
 
-    const newUser: User = await prisma.user.create({
-      data: {
-        Role: Role.EMPLOYEE,
-        LoginCode: hashedPassword,
-        Email: email.toLowerCase(),
-        EmployeeID: employee.id,
-      },
+// Get current user
+authRouter.get("/me", requireAuth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    const user: User | null = await prisma.user.findUnique({
+      where: { id: req.user.id },
     });
-
-    console.log(`New user created: ${newUser.id}`);
-    res.status(201).json({ message: "User created successfully" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+return res.json({ user: { id: user.id, Role: user.Role, EmployeeID: user.EmployeeID, Email: user.Email } });
   } catch (err) {
-    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
+// Login
 authRouter.post("/login", async (req: Request, res: Response) => {
   try {
     // TODO: Add zod-validation
@@ -70,9 +100,10 @@ authRouter.post("/login", async (req: Request, res: Response) => {
       return;
     }
 
-    const payload: { id: number; email: string } = {
+    const payload: { id: number; email: string; role: Role } = {
       id: user.id,
       email: user.Email,
+      role: user.Role,
     };
 
     const jwtSecret: string | undefined = process.env.JWT_SECRET;
