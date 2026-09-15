@@ -5,13 +5,14 @@ import type { Employee, User } from "../../generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 export const authRouter = Router();
-
-authRouter.post("/register", async (req: Request, res: Response) => {
+// Endpoint to register new employee (not ADMIN)
+authRouter.post("/register", requireAdmin, async (req: Request, res: Response) => {
   try {
     // TODO: Add zod-validation
     const { firstname, lastname, email, password } = req.body;
@@ -52,8 +53,25 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     console.log(err);
     res.status(500).json({ message: "Server error" });
   }
+},
+);
+
+// Get current user
+authRouter.get("/me", requireAuth, async (req, res) => {
+  try {
+    const user: User | null = await prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
+// Login
 authRouter.post("/login", async (req: Request, res: Response) => {
   try {
     // TODO: Add zod-validation
@@ -70,9 +88,10 @@ authRouter.post("/login", async (req: Request, res: Response) => {
       return;
     }
 
-    const payload: { id: number; email: string } = {
+    const payload: { id: number; email: string; role: Role } = {
       id: user.id,
       email: user.Email,
+      role: user.Role,
     };
 
     const jwtSecret: string | undefined = process.env.JWT_SECRET;
